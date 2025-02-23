@@ -18,6 +18,8 @@ func Example_CreateSession() {
 		WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
 		WithHashType("SHA512").
 		WithText("Enter PIN1").
+		WithTextFormat("GSM-7").
+		WithLanguage("ENG").
 		WithURL("https://tsp.demo.sk.ee/mid-api").
 		WithTimeout(60 * time.Second)
 
@@ -39,6 +41,8 @@ func Example_FetchSession() {
 		WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
 		WithHashType("SHA512").
 		WithText("Enter PIN1").
+		WithTextFormat("GSM-7").
+		WithLanguage("ENG").
 		WithURL("https://tsp.demo.sk.ee/mid-api").
 		WithTimeout(60 * time.Second)
 
@@ -61,6 +65,8 @@ func Example_ProcessMultipleIdentitiesInBackground() {
 		WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
 		WithHashType("SHA512").
 		WithText("Enter PIN1").
+		WithTextFormat("GSM-7").
+		WithLanguage("ENG").
 		WithURL("https://tsp.demo.sk.ee/mid-api").
 		WithTimeout(60 * time.Second)
 
