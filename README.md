@@ -162,6 +162,46 @@ func main() {
 }
 ```
 
+## Certificate pinning (optional)
+
+```go
+package main
+
+import (
+  "context"
+  "fmt"
+  "sync"
+  "time"
+
+  "github.com/tab/mobileid"
+)
+
+func main() {
+  manager, err := mobileid.NewCertificateManager("./certs")
+  if err != nil {
+    fmt.Println("Failed to create certificate manager:", err)
+  }
+  tlsConfig := manager.TLSConfig()
+
+  client := mobileid.NewClient().
+    WithRelyingPartyName("DEMO").
+    WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
+    WithHashType("SHA512").
+    WithText("Enter PIN1").
+    WithTextFormat("GSM-7").
+    WithLanguage("ENG").
+    WithURL("https://tsp.demo.sk.ee/mid-api").
+    WithTimeout(60 * time.Second).
+    WithTLSConfig(tlsConfig)
+
+  // Further processing...
+```
+
+## Documentation
+
+- [GoDoc](https://pkg.go.dev/github.com/tab/mobileid)
+- [Mobile-ID Documentation](https://github.com/SK-EID/MID)
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.

@@ -348,6 +348,82 @@ func Test_WithTimeout(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_WithTLSConfig(t *testing.T) {
+	manager, err := NewCertificateManager("./certs")
+	assert.NoError(t, err)
+
+	tlsConfig := manager.TLSConfig()
+
+	type result struct {
+		config *config.Config
+	}
+
+	tests := []struct {
+		name     string
+		before   func(c Client)
+		expected result
+	}{
+		{
+			name: "Success",
+			before: func(c Client) {
+				c.WithRelyingPartyName("DEMO").
+					WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
+					WithHashType("SHA512").
+					WithText("Enter PIN1").
+					WithTextFormat("GSM-7").
+					WithLanguage("ENG").
+					WithURL("https://tsp.demo.sk.ee/mid-api").
+					WithTimeout(60 * time.Second).
+					WithTLSConfig(tlsConfig)
+			},
+			expected: result{
+				config: &config.Config{
+					RelyingPartyName: "DEMO",
+					RelyingPartyUUID: "00000000-0000-0000-0000-000000000000",
+					HashType:         "SHA512",
+					Text:             "Enter PIN1",
+					TextFormat:       "GSM-7",
+					Language:         "ENG",
+					URL:              "https://tsp.demo.sk.ee/mid-api",
+					Timeout:          60 * time.Second,
+					TLSConfig:        tlsConfig,
+				},
+			},
+		},
+		{
+			name: "Without TLS Config",
+			before: func(c Client) {
+				c.
+					WithRelyingPartyName("DEMO").
+					WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000")
+			},
+			expected: result{
+				config: &config.Config{
+					RelyingPartyName: "DEMO",
+					RelyingPartyUUID: "00000000-0000-0000-0000-000000000000",
+					HashType:         "SHA512",
+					Text:             "Enter PIN1",
+					TextFormat:       "GSM-7",
+					Language:         "ENG",
+					URL:              "https://tsp.demo.sk.ee/mid-api",
+					Timeout:          60 * time.Second,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient()
+			tt.before(c)
+
+			clientImpl := c.(*client)
+			assert.Equal(t, tt.expected.config, clientImpl.config)
+		})
+	}
+}
+
 func Test_Validate(t *testing.T) {
 	tests := []struct {
 		name     string
