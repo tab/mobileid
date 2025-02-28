@@ -10,6 +10,12 @@ import (
 )
 
 func main() {
+	manager, err := mobileid.NewCertificateManager("./certs")
+	if err != nil {
+		fmt.Println("Failed to create certificate manager:", err)
+	}
+	tlsConfig := manager.TLSConfig()
+
 	client := mobileid.NewClient().
 		WithRelyingPartyName("DEMO").
 		WithRelyingPartyUUID("00000000-0000-0000-0000-000000000000").
@@ -18,7 +24,8 @@ func main() {
 		WithTextFormat("GSM-7").
 		WithLanguage("ENG").
 		WithURL("https://tsp.demo.sk.ee/mid-api").
-		WithTimeout(60 * time.Second)
+		WithTimeout(60 * time.Second).
+		WithTLSConfig(tlsConfig)
 
 	identities := map[string]string{
 		"51307149560": "+37269930366",

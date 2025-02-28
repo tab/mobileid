@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -21,6 +22,9 @@ const (
 	IdleConnTimeout           = 90 * time.Second
 	TLSHandshakeTimeout       = 10 * time.Second
 	Timeout                   = 60 * time.Second
+
+	MinMobileIdTimeout = 1000
+	MaxMobileIdTimeout = 120000
 )
 
 type Response struct {
@@ -58,12 +62,13 @@ func CreateAuthenticationSession(
 	}
 
 	endpoint := fmt.Sprintf("%s/authentication", cfg.URL)
-	response, err := httpClient().R().SetContext(ctx).SetBody(body).Post(endpoint)
+	response, err := httpClient(cfg).R().SetContext(ctx).SetBody(body).Post(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.IsSuccess() {
+	switch response.StatusCode() {
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		var result Response
 		if err = json.Unmarshal(response.Body(), &result); err != nil {
 			return nil, err
@@ -78,9 +83,15 @@ func CreateAuthenticationSession(
 			Id:   result.Id,
 			Code: code,
 		}, nil
+	case http.StatusBadRequest:
+		return nil, errors.ErrMobileIdProviderPayloadError
+	case http.StatusUnauthorized:
+		return nil, errors.ErrMobileIdAccessForbidden
+	case http.StatusMethodNotAllowed:
+		return nil, errors.ErrMobileIdMethodNotAllowed
+	default:
+		return nil, errors.ErrMobileIdProviderError
 	}
-
-	return nil, errors.ErrMobileIdProviderError
 }
 
 func FetchAuthenticationSession(
@@ -90,33 +101,46 @@ func FetchAuthenticationSession(
 ) (*models.AuthenticationResponse, error) {
 	endpoint := fmt.Sprintf("%s/authentication/session/%s", cfg.URL, sessionId)
 
-	response, err := httpClient().R().SetContext(ctx).Get(endpoint)
+	timeout := int(cfg.Timeout.Milliseconds())
+
+	switch {
+	case timeout < MinMobileIdTimeout:
+		timeout = MinMobileIdTimeout
+	case timeout > MaxMobileIdTimeout:
+		timeout = MaxMobileIdTimeout
+	}
+
+	response, err := httpClient(cfg).R().
+		SetContext(ctx).
+		SetQueryParam("timeoutMs", strconv.Itoa(timeout)).
+		Get(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.IsSuccess() {
+	switch response.StatusCode() {
+	case http.StatusOK:
 		var result models.AuthenticationResponse
 		if err = json.Unmarshal(response.Body(), &result); err != nil {
 			return nil, err
 		}
-
 		return &result, nil
-	}
-
-	if response.StatusCode() == http.StatusNotFound {
+	case http.StatusForbidden:
+		return nil, errors.ErrMobileIdAccessForbidden
+	case http.StatusNotFound:
 		return nil, errors.ErrMobileIdSessionNotFound
+	default:
+		return nil, errors.ErrMobileIdProviderError
 	}
-
-	return nil, errors.ErrMobileIdProviderError
 }
 
-func httpClient() *resty.Client {
+func httpClient(cfg *config.Config) *resty.Client {
 	transport := &http.Transport{
 		MaxIdleConns:        MaxIdleConnections,
 		MaxIdleConnsPerHost: MaxIdleConnectionsPerHost,
 		IdleConnTimeout:     IdleConnTimeout,
 		TLSHandshakeTimeout: TLSHandshakeTimeout,
+		TLSClientConfig:     cfg.TLSConfig,
 	}
 
 	client := resty.NewWithClient(&http.Client{

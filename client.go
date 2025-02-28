@@ -2,10 +2,12 @@ package mobileid
 
 import (
 	"context"
+	"crypto/tls"
 	"time"
 
 	"github.com/tab/mobileid/internal/config"
 	"github.com/tab/mobileid/internal/errors"
+	"github.com/tab/mobileid/internal/requests"
 	"github.com/tab/mobileid/internal/utils"
 )
 
@@ -13,7 +15,7 @@ const (
 	Text       = "Enter PIN1"
 	TextFormat = "GSM-7"
 	Language   = "ENG"
-	Timeout    = 60 * time.Second
+	Timeout    = requests.Timeout
 	URL        = "https://tsp.demo.sk.ee/mid-api"
 )
 
@@ -29,6 +31,7 @@ type Client interface {
 	WithLanguage(language string) Client
 	WithURL(url string) Client
 	WithTimeout(timeout time.Duration) Client
+	WithTLSConfig(tlsConfig *tls.Config) Client
 
 	Validate() error
 }
@@ -89,6 +92,11 @@ func (c *client) WithURL(url string) Client {
 
 func (c *client) WithTimeout(timeout time.Duration) Client {
 	c.config.Timeout = timeout
+	return c
+}
+
+func (c *client) WithTLSConfig(tlsConfig *tls.Config) Client {
+	c.config.TLSConfig = tlsConfig
 	return c
 }
 
