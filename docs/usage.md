@@ -1,25 +1,6 @@
-# Go Mobile-ID client
+# Usage
 
-Golang client for the Mobile-ID API (https://www.mobile-id.lt/en/).
-It is a simple wrapper around the API, which helps easily integrate Mobile-ID authentication into Golang applications.
-
-## Features
-
-- Flexible client configuration
-- Concurrent processing
-- Optional TLS configuration (certificate pinning)
-
-## Installation
-
-Use `go get` to install the package
-
-```sh
-go get -u github.com/tab/mobileid
-```
-
-## Usage
-
-### Creating a Client
+## Configure a client
 
 Create a new client using `NewClient()` and customize its configuration using chainable methods.
 
@@ -53,44 +34,65 @@ func main() {
 }
 ```
 
-### Start Authentication
+Check client default configuration values:
+
+```go
+const (
+  Text       = "Enter PIN1"
+  TextFormat = "GSM-7"
+  Language   = "ENG"
+  Timeout    = requests.Timeout
+  URL        = "https://tsp.demo.sk.ee/mid-api"
+)
+
+cfg := &config.Config{
+  HashType:   utils.HashTypeSHA512,
+  Text:       Text,
+  TextFormat: TextFormat,
+  Language:   Language,
+  URL:        URL,
+  Timeout:    Timeout,
+}
+```
+
+## Start authentication
 
 Initiate a new authentication session with the `Mobile-ID` provider by calling `CreateSession`.
 This function generates a random hash, constructs the session request, and returns a session that includes an identifier and a verification code.
 
 ```go
 func main() {
-  // Create a client...
+// Create a client...
 
 
-  phoneNumber := "+37268000769"
-  identity := "60001017869"
+phoneNumber := "+37268000769"
+identity := "60001017869"
 
-  session, err := client.CreateSession(context.Background(), phoneNumber, identity)
-  if err != nil {
-    log.Fatal("Error creating session:", err)
-  }
+session, err := client.CreateSession(context.Background(), phoneNumber, identity)
+if err != nil {
+log.Fatal("Error creating session:", err)
+}
 
-  fmt.Println("Session created:", session)
+fmt.Println("Session created:", session)
 }
 ```
 
-### Fetch Session
+## Fetch authentication session
 
 ```go
 func main() {
-  // Create a client...
+// Create a client...
 
-  person, err := client.FetchSession(context.Background(), sessionId)
-  if err != nil {
-    log.Fatal("Error fetching session:", err)
-  }
+person, err := client.FetchSession(context.Background(), sessionId)
+if err != nil {
+log.Fatal("Error fetching session:", err)
+}
 
-  fmt.Println("Session status:", session.State)
+fmt.Println("Session status:", session.State)
 }
 ```
 
-### Async Example
+## Async example
 
 For applications requiring the processing of multiple authentication sessions simultaneously, `Mobile-ID` provides a worker model.
 Create a worker using `NewWorker`, configure its concurrency and queue size, and then start processing.
@@ -203,17 +205,17 @@ func main() {
   // Further processing...
 ```
 
-## Documentation
+```sh
+Session created: &{b2769811-16de-42f1-a06e-c580d07c1298 5960}
+Fetched person: &{PNOEE-60001017869 60001017869 EID2016 TESTNUMBER}
+```
 
-- [Documentation](https://tab.github.io/mobileid)
-- [GoDoc](https://pkg.go.dev/github.com/tab/mobileid)
-- [Mobile-ID Documentation](https://github.com/SK-EID/MID)
+- **b2769811-16de-42f1-a06e-c580d07c1298** – session id
+- **5960** – verification code
 
-## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+- **PNOEE-60001017869** – formatted identity
+- **60001017869** – personal identification code
+- **EID2016** – person first name
+- **TESTNUMBER** – person last name
 
-## Acknowledgements
-
-- [SK ID Solutions](https://www.skidsolutions.eu)
-- [Mobile-ID](https://www.mobile-id.lt/en)
