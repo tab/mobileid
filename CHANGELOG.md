@@ -1,6 +1,15 @@
 
 # CHANGELOG
 
+## [v0.3.0](https://github.com/tab/mobileid/releases/tag/v0.3.0)
+
+### Features
+- **feat:** Add MkDocs documentation
+
+### Chore
+- **chore:** Update CI tools (golangci-lint, codecov-action)
+- **chore:** Bump dependencies (go.uber.org/mock)
+
 ## [v0.2.0](https://github.com/tab/mobileid/releases/tag/v0.2.0)
 
 ### Features
